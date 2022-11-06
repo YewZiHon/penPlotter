@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+penplotterenv/
 build/
 develop-eggs/
 dist/
@@ -46,7 +47,6 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
-*.py,cover
 .hypothesis/
 .pytest_cache/
 cover/
