@@ -1,2 +1,4 @@
-opencv-contrib-python
-svg_to_gcode
+numpy==1.23.4
+opencv-contrib-python==4.6.0.66
+Pillow==9.3.0
+svg-to-gcode==1.5.4
