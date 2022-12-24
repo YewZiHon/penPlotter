@@ -50,12 +50,14 @@ def waitBreak(choice):
 
             # Create an object of tkinter ImageTk
             file = Image.open(filename)
+            file = crop_image(file)
+            file = file.resize((950,950))
             img = ImageTk.PhotoImage(file)
             canvas= tk.Canvas(root, width= 1000, height= 1000, background='blue')
             canvas.create_image(
-                10, 
-                10, 
-                anchor=tk.NW, 
+                500, 
+                500, 
+                anchor=tk.CENTER, 
                 image=img
                 )
             canvas.place(rely = 0.5, relx = 0.5, anchor=tk.CENTER)
@@ -76,6 +78,17 @@ def waitBreak(choice):
     if choice == TAKEPICTURE:
         print("take photo")
         clear(TAKEPICTURE)
+def crop_image(image):
+    file_image_width, file_image_height =  image.size
+    if file_image_width == file_image_height:
+        return image
+    elif file_image_width > file_image_height: #crop x
+        diff = file_image_width - file_image_height
+        return image.crop((int(diff/2), 0, file_image_width-int(diff/2), file_image_height))
+    else:#crop y
+        diff = file_image_height - file_image_width
+        return image.crop((0, int(diff/2), 0, file_image_height-int(diff/2)))
+
 
 def clear(page):
     if page == CHOOSEIMAGE or TAKEPICTURE:
