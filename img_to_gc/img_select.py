@@ -5,6 +5,8 @@ import tkinter.ttk as ttk
 import sys
 import cv2 as cv
 from PIL import Image,ImageTk
+import threading
+import time
 
 root = tk.Tk()
 root.configure(background='lightblue')
@@ -18,11 +20,14 @@ TAKEPICTURE = 1
 
 CHOOSEIMAGE_OK = 100
 CHOOSEIMAGE_BACK = 101
+GENERARE_CANNY = 110
+GENERATE_GCODE = 111
+GCODE_PLOT = 112
 
 titlefont = int(screen_height/20) 
 
 def waitBreak(choice):
-    global canvas, choose_image_ok, choose_image_back
+    global canvas, choose_image_ok, choose_image_back, choose_image_ok_processing, t1
     if choice == CHOOSEIMAGE:
 
         print("choose file")
@@ -52,6 +57,7 @@ def waitBreak(choice):
             file = Image.open(filename)
             file = crop_image(file)
             file = file.resize((950,950))
+            file.save(sys.path[0]+"\\image.jpg")
             img = ImageTk.PhotoImage(file)
             canvas= tk.Canvas(root, width= 1000, height= 1000, background='blue')
             canvas.create_image(
@@ -68,8 +74,14 @@ def waitBreak(choice):
             canvas['image'] = img #workaround because garbage collector why.
             
     if choice == CHOOSEIMAGE_OK:
+        global t1
         print("image ok")
-
+        clear(CHOOSEIMAGE_OK)
+        choose_image_ok_processing = tk.Label(root, text = "Processing", pady=5, font=("Arial Bold", titlefont))
+        choose_image_ok_processing.place(rely = 0.5, relx = 0.5, anchor=tk.CENTER)
+        t1 = threading.Thread(target=generate_canny, args=())
+        t1.start()
+        
     if choice == CHOOSEIMAGE_BACK:
         print("image back")
         clear(CHOOSEIMAGE_BACK)
@@ -78,6 +90,7 @@ def waitBreak(choice):
     if choice == TAKEPICTURE:
         print("take photo")
         clear(TAKEPICTURE)
+
 def crop_image(image):
     file_image_width, file_image_height =  image.size
     if file_image_width == file_image_height:
@@ -89,19 +102,66 @@ def crop_image(image):
         diff = file_image_height - file_image_width
         return image.crop((0, int(diff/2), 0, file_image_height-int(diff/2)))
 
+def generate_canny():
+    global canvas, img, generate_gcode_processing
+    canny = img_to_gc.img_to_svg(sys.path[0]+"\\image.jpg")
+    cv.imwrite(sys.path[0]+"\\imageProcessed.png",canny)
+    clear(GENERARE_CANNY)
+    img = ImageTk.PhotoImage(file = sys.path[0]+"\\imageProcessed.png")
+    canvas= tk.Canvas(root, width= 1000, height= 1000, background='blue')
+    canvas.create_image(
+        500, 
+        500, 
+        anchor=tk.CENTER, 
+        image=img
+        )
+    canvas.place(rely = 0.5, relx = 0.5, anchor=tk.CENTER)
+    generate_gcode_processing = tk.Label(root, text = "Generating G code", pady=5, font=("Arial Bold", titlefont))
+    generate_gcode_processing.place(rely = 0.5, relx = 0.5, anchor=tk.CENTER)
+    t2 = threading.Thread(target=generate_gcode, args=())
+    t2.start()
+    canvas['image'] = img #workaround because garbage collector why.
+
+def generate_gcode():
+    global t1
+    t1.join()
+    print ("Gcode gen")
+    img_to_gc.generate_gcode()
+    plot_gcode()
+
+def plot_gcode():
+    #plot gcode
+    print("plot gcode")
+    clear(GENERATE_GCODE)
+    main()
+
+
 
 def clear(page):
-    if page == CHOOSEIMAGE or TAKEPICTURE:
+    if page == CHOOSEIMAGE or page == TAKEPICTURE:
         global main_choose_image, main_take_photo
         main_choose_image.place_forget()
         main_take_photo.place_forget()
         #main_exit.place_forget
 
-    if page == CHOOSEIMAGE_BACK:
-        global canvas
+    if page == CHOOSEIMAGE_BACK or page == CHOOSEIMAGE_OK:
+        global canvas, choose_image_ok, choose_image_back
         canvas.place_forget()
         choose_image_ok.place_forget()
         choose_image_back.place_forget()
+
+    if page == GENERARE_CANNY:
+        global choose_image_ok_processing
+        choose_image_ok_processing.place_forget()
+
+    if page == GENERATE_GCODE:
+        global generate_gcode_processing
+        generate_gcode_processing.place_forget()
+
+    if page == GCODE_PLOT:
+        canvas.place_forget()
+
+
 
 def EXIT():
     print("exit")
@@ -109,7 +169,7 @@ def EXIT():
     exit()
 
 def main():
-    global main_choose_image, main_take_photo
+    global main_choose_image, main_take_photo, main_exit
     main_choose_image = tk.Button(root, text="Choose Image", pady=5, font=("Arial Bold", titlefont),bg='lightgray', command=lambda: {waitBreak(CHOOSEIMAGE)}, anchor=tk.CENTER)
     main_choose_image.place(rely = 0.5, relx = 0.3, anchor=tk.CENTER)
     main_take_photo = tk.Button(root, text="Take Photo", pady=5, font=("Arial Bold", titlefont),bg='lightgray', command=lambda: {waitBreak(TAKEPICTURE)}, anchor=tk.CENTER)

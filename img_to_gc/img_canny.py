@@ -9,7 +9,7 @@ def getImage(image):
 def getCanny(image):
     image = cv.blur(image,(3,3))
 
-    INCREMENT = 20
+    INCREMENT = 10
     thresholdVal = 10
     tries = 0
     closestMin = [0.00,10]
@@ -23,8 +23,8 @@ def getCanny(image):
         if pixelRatio < TARGET_RATIO: #less than target
             if thresholdVal == closestMax[1]:
 
-                if INCREMENT != 5:
-                    INCREMENT = 5
+                if INCREMENT != 1:
+                    INCREMENT = 1
                 else:
                     print("Found best match")
                     break
